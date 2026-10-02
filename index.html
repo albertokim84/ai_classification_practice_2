@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>인공지능 분류 학습: 황금 가중치를 찾아라!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 모바일 터치를 고려한 슬라이더 스타일링 */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #e5e7eb;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto space-y-6">
+        
+        <!-- 타이틀 섹션 -->
+        <div class="bg-white rounded-xl shadow-sm p-6 text-center border-t-4 border-blue-500">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-2">🤖 인공지능 분류 학습 시뮬레이터</h1>
+            <p class="text-gray-600 text-sm md:text-base">과목별 가중치를 조절하여 인공지능이 선생님의 '입력 성향(정답)'과 100% 일치하게 판별하도록 훈련(탐색)시켜 보세요!</p>
+        </div>
+
+        <!-- 가중치 조절 컨트롤 패널 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- 문과 가중치 패널 -->
+            <div class="bg-blue-50 rounded-xl p-5 border border-blue-100 shadow-sm">
+                <h2 class="text-lg font-bold text-blue-800 mb-4">📘 문과 가중치 설정 (합 1.0)</h2>
+                <div class="flex justify-between text-sm font-bold text-gray-700 mb-2">
+                    <span>국어 가중치: <span id="korLabel" class="text-blue-600 text-lg">0.0</span></span>
+                    <span>영어 가중치: <span id="engLabel" class="text-blue-600 text-lg">1.0</span></span>
+                </div>
+                <!-- value="0" 으로 수정됨 -->
+                <input type="range" id="korWeight" min="0" max="1" step="0.1" value="0" oninput="updateTable()">
+                <p class="text-xs text-gray-500 mt-2 text-center">슬라이더를 움직이면 국어와 영어의 비율이 자동으로 조정됩니다.</p>
+            </div>
+
+            <!-- 이과 가중치 패널 -->
+            <div class="bg-red-50 rounded-xl p-5 border border-red-100 shadow-sm">
+                <h2 class="text-lg font-bold text-red-800 mb-4">📙 이과 가중치 설정 (합 1.0)</h2>
+                <div class="flex justify-between text-sm font-bold text-gray-700 mb-2">
+                    <span>수학 가중치: <span id="mathLabel" class="text-red-600 text-lg">0.0</span></span>
+                    <span>과학 가중치: <span id="sciLabel" class="text-red-600 text-lg">1.0</span></span>
+                </div>
+                <!-- value="0" 으로 수정됨 -->
+                <input type="range" id="mathWeight" min="0" max="1" step="0.1" value="0" oninput="updateTable()">
+                <p class="text-xs text-gray-500 mt-2 text-center">슬라이더를 움직이면 수학과 과학의 비율이 자동으로 조정됩니다.</p>
+            </div>
+        </div>
+
+        <!-- 결과 요약 -->
+        <div class="bg-gray-800 text-white rounded-xl p-4 text-center shadow-md">
+            <h3 class="text-xl font-bold" id="accuracyDisplay">현재 성향 적합성: 확인 중...</h3>
+        </div>
+
+        <!-- 데이터 테이블 (모바일 스크롤 지원) -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm md:text-base text-center whitespace-nowrap">
+                    <thead class="bg-gray-100 text-gray-700">
+                        <tr>
+                            <th class="py-3 px-4 font-bold border-b">학생 번호</th>
+                            <th class="py-3 px-2 text-blue-800 bg-blue-50/50 border-b">국어</th>
+                            <th class="py-3 px-2 text-blue-800 bg-blue-50/50 border-b">영어</th>
+                            <th class="py-3 px-2 text-red-800 bg-red-50/50 border-b">수학</th>
+                            <th class="py-3 px-2 text-red-800 bg-red-50/50 border-b">과학</th>
+                            <th class="py-3 px-3 font-bold border-b">(가중치)문과 점수</th>
+                            <th class="py-3 px-3 font-bold border-b">(가중치)이과 점수</th>
+                            <th class="py-3 px-3 font-bold border-b">입력 성향(정답)</th>
+                            <th class="py-3 px-3 font-bold border-b">(가중치)성향 판별</th>
+                            <th class="py-3 px-4 font-bold border-b">성향 적합성</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-gray-100">
+                        <!-- JS로 동적 생성됨 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // 학생 데이터
+        const students = [
+            { id: "1번", kor: 70, eng: 90, math: 100, sci: 60, target: "이과" },
+            { id: "2번", kor: 100, eng: 60, math: 70, sci: 90, target: "문과" },
+            { id: "3번", kor: 75, eng: 85, math: 85, sci: 75, target: "이과" },
+            { id: "4번", kor: 85, eng: 75, math: 60, sci: 100, target: "문과" }
+        ];
+
+        function updateTable() {
+            // 슬라이더 값 읽기
+            const korW = parseFloat(document.getElementById('korWeight').value);
+            const engW = (1.0 - korW);
+            
+            const mathW = parseFloat(document.getElementById('mathWeight').value);
+            const sciW = (1.0 - mathW);
+
+            // 라벨 업데이트
+            document.getElementById('korLabel').innerText = korW.toFixed(1);
+            document.getElementById('engLabel').innerText = engW.toFixed(1);
+            document.getElementById('mathLabel').innerText = mathW.toFixed(1);
+            document.getElementById('sciLabel').innerText = sciW.toFixed(1);
+
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = ''; // 테이블 초기화
+
+            let correctCount = 0;
+
+            // 각 학생별 데이터 계산 및 렌더링
+            students.forEach(student => {
+                // 가중치 적용 점수 계산
+                const munScore = (student.kor * korW) + (student.eng * engW);
+                const leeScore = (student.math * mathW) + (student.sci * sciW);
+                
+                // AI 성향 판별
+                let predicted = "판별 불가";
+                if (munScore > leeScore) {
+                    predicted = "문과";
+                } else if (leeScore > munScore) {
+                    predicted = "이과";
+                }
+
+                // 적합성 확인
+                const isCorrect = (predicted === student.target);
+                if (isCorrect) correctCount++;
+
+                // 테이블 행 생성
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition-colors duration-150";
+                
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-bold text-gray-700">${student.id}</td>
+                    <td class="py-3 px-2 bg-blue-50/30 text-gray-600">${student.kor}</td>
+                    <td class="py-3 px-2 bg-blue-50/30 text-gray-600">${student.eng}</td>
+                    <td class="py-3 px-2 bg-red-50/30 text-gray-600">${student.math}</td>
+                    <td class="py-3 px-2 bg-red-50/30 text-gray-600">${student.sci}</td>
+                    
+                    <td class="py-3 px-3 font-bold text-blue-600 bg-blue-50/10">${munScore.toFixed(1)}</td>
+                    <td class="py-3 px-3 font-bold text-red-600 bg-red-50/10">${leeScore.toFixed(1)}</td>
+                    
+                    <td class="py-3 px-3 font-bold text-gray-800 bg-gray-100/50">${student.target}</td>
+                    
+                    <td class="py-3 px-3 font-bold ${predicted === '문과' ? 'text-blue-600' : (predicted === '이과' ? 'text-red-600' : 'text-gray-400')}">
+                        ${predicted}
+                    </td>
+                    
+                    <td class="py-3 px-4">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${isCorrect ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'}">
+                            ${isCorrect ? '✅ 일치' : '❌ 불일치'}
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // 전체 정확도(적합성) 업데이트
+            const accuracy = Math.round((correctCount / students.length) * 100);
+            const accuracyDisplay = document.getElementById('accuracyDisplay');
+            accuracyDisplay.innerText = `현재 성향 적합성: ${accuracy}% (총 ${students.length}명 중 ${correctCount}명 일치)`;
+            
+            // 100% 일치 시 시각적 피드백 강화
+            if (accuracy === 100) {
+                accuracyDisplay.classList.remove('bg-gray-800');
+                accuracyDisplay.classList.add('bg-green-600', 'animate-pulse');
+                accuracyDisplay.innerText = `🎉 훈련 완료! 성향 적합성 100% (완벽한 가중치를 찾았습니다!)`;
+            } else {
+                accuracyDisplay.classList.add('bg-gray-800');
+                accuracyDisplay.classList.remove('bg-green-600', 'animate-pulse');
+            }
+        }
+
+        // 페이지 로드 시 초기 계산 실행
+        window.onload = updateTable;
+    </script>
+</body>
+</html>
